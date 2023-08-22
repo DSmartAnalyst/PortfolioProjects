@@ -1,0 +1,99 @@
+import pandas as pd
+
+df1 = pd.read_csv (r"/Users/phresh/Downloads/GEOSTAT_Grid_POP_2006_1K/GEOSTAT_grid_EU_POP_2006_1K_V1_1_1.csv", sep = ";")
+
+# Should merge dataframes from both 2006 and 2021 files 
+# Note: Since I was unable to download either a csv or json file for 2021 therefore I am improvising by writing the codes in response to the questions and using 2006 data where applicable.
+
+# A. Seperating the longitude and latitude from the Grid_ID
+
+# Function to extract latitude from GRD_ID
+
+def extract_latitude(grd_id):
+    start_index = grd_id.find('mN') + 1  # Adding 1 to include 'N'
+    end_index = grd_id.find('E')
+    if start_index >= 0 and end_index >= 0:
+        return grd_id[start_index:end_index]
+    else:
+        return None
+    
+
+# Applying the function to create the 'Latitude' column
+
+df1['Latitude'] = df1['GRD_ID'].apply(extract_latitude)
+
+
+# Function to extract longitude from GRD_ID
+def extract_longitude(grd_id):
+    start_index = grd_id.find('E')
+    if start_index >= 0:
+        return grd_id[start_index:]
+    else:
+        return None
+
+
+# Apply the function to create the 'Longitude' column
+
+df1['Longitude'] = df1['GRD_ID'].apply(extract_longitude)
+
+
+
+# B. Population for 2006
+#Rename the 'POP_TOT' column to '2006_POP_TOT' (I would have renamed both 2006 total population and 2021 total population data but 2021 data is inaccessible)
+
+df1.rename(columns={'POP_TOT': '2006_POP_TOT'}, inplace=True)
+
+
+#Filtered dataframe based on centre code for slovakia which is 'SK'(I used the total population in 2006 instead due to inavailability of 2021 data for relative increase calculation, however i would provide the code for for verification purposes) 
+
+df1 = df1[df1['CNTR_CODE'] == 'SK'].sort_values(by = '2006_POP_TOT', ascending = False)
+
+# C. Population for 2021
+
+# D. Relative Change
+#The Code below will calculate the relative change in the population for Slovakia only
+
+#df1['Relative Change'] = df1.apply(lambda row: (row['2021_POP_TOT'] - row['2006_POP_TOT']) / row['2006_POP_TOT'] if row['CNTR_CODE'] == 'SK' else None, axis=1)
+
+
+#Top 5 grid cells in Slovakia which have the highest relative increase in population 
+df1 = df1.filter(items = ['GRD_ID', '2006_POP_TOT', 'Latitude', 'Longitude','CNTR_CODE'])
+df2 = df1.head(5)
+
+
+#2. What is the average and median population per 1 square km grid in Slovakia in 2021? 
+
+# Calculate the average value for rows with CNTR_CODE 'SK'
+average_sk = df1[df1['CNTR_CODE'] == 'SK']['2006_POP_TOT'].mean()
+
+# Create a new 'Average' column and set average_sk for rows with CNTR_CODE 'SK'
+df1['Average'] = df1['2006_POP_TOT']
+df1.loc[df1['CNTR_CODE'] == 'SK', 'Average'] = average_sk
+
+# Calculate the median value for "2006_POP_TOT" with "CNTR_CODE" equal to 'SK'
+median_value = df1.loc[df1['CNTR_CODE'] == 'SK', '2006_POP_TOT'].median()
+
+# Create a new "Median" column with the calculated median value
+df1['Median'] = median_value
+
+#2. What is the average and median population per 1 square km grid in Slovakia in 2021? 
+
+# Calculate the average value for rows with CNTR_CODE 'SK'
+average_sk = df1[df1['CNTR_CODE'] == 'SK']['2006_POP_TOT'].mean()
+
+# Create a new 'Average' column and set average_sk for rows with CNTR_CODE 'SK'
+df1['Average'] = df1['2006_POP_TOT']
+df1.loc[df1['CNTR_CODE'] == 'SK', 'Average'] = average_sk
+
+# Calculate the median value for "2006_POP_TOT" with "CNTR_CODE" equal to 'SK'
+median_value = df1.loc[df1['CNTR_CODE'] == 'SK', '2006_POP_TOT'].median()
+
+# Create a new "Median" column with the calculated median value
+df1['Median'] = median_value
+
+#Top 5 grid cells in Slovakia which have the highest relative increase in population 
+df1 = df1.filter(items = ['GRD_ID', '2006_POP_TOT','Average','Median', 'Latitude', 'Longitude','CNTR_CODE'])
+df2 = df1.head(5)
+
+
+df2
